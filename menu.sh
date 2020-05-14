@@ -32,7 +32,7 @@ select opcion in "${OPCIONES[@]}"; do
      salir $?
      break
    elif [ "$opcion" = "Ejercicio 6" ]; then
-     ./e6.sh
+     ./e6.sh -m
      salir $?
      break
    elif [ "$opcion" = "Salir" ]; then
