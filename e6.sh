@@ -17,7 +17,14 @@ function error {
   echo "No existe la carpeta del usuario ingresado"
 }
 
-function respaldar {
+function respaldo_automatico {
+  usuario=$(whoami)
+  hora=$(date +%H%M)
+  tar -czf backup-$usuario-$hora.tar.gz /home/$usuario/
+  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz
+}
+
+function respaldo_manual {
   echo "Respaldando carpeta de trabajo del usuario" $1
   usuario=$1
   hora=$(date +%H%M) # Captura la hora y minuto actual
@@ -29,14 +36,27 @@ function respaldar {
     # En caso de crear una nueva carpeta de destino para almacenar los backup, el usuario
     # tiene que tener los privilegios para escribir en ella.
   sleep 2
-  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz
+  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz 
   if [ -f /home/backup/backup-$usuario-$hora.tar.gz ]; then
     echo "Respaldo finalizado con exito"
   else
     if [ -f backup-$usuario-$hora.tar.gz ]; then
-     rm backup-$usuario-$hora.tar.gz
+     rm backup-$usuario-$hora.tar.gz # En caso de fallar el respaldo elimina la copia que genere
+                                     # dentro de la carpeta donde se encuentre el presente Script
     fi
     echo "Error Codigo:" $? "No se realizo el respaldo, intente nuevamente"
+  fi
+}
+
+# Funcion que verifica que exista la carpeta home del usuario ingresado
+# en caso de no existir genera un codigo de error
+function verificar_usuario {
+  if [ -d /home/$1 ]; then
+    respaldo_manual $1
+    sleep 2
+  else
+    /home/$1 &> /dev/null
+    echo "Error Codigo:" $? "- No existe una carpeta con el nombre del usuario ingresado"
   fi
 }
 
@@ -51,7 +71,8 @@ function verificar_carpeta_backup {
     echo "Creando la carpeta, espere por favor"
     sleep 1
     sudo mkdir /home/backup/
-    sudo chmod 777 /home/backup/
+    sudo chmod 771 /home/backup/
+    cd /home/backup &> /dev/null
     error=$(echo $?)
     if [ $error -eq 1 ]; then
       echo "Error al crear la carpeta, no se pudo realizar el respaldo"
@@ -67,18 +88,6 @@ function verificar_carpeta_backup {
   else
     echo "Error fatal. Codigo No:" $?
     exit 1
-  fi
-}
-
-# Funcion que verifica que exista la carpeta home del usuario ingresado
-# en caso de no existir genera un codigo de error
-function verificar_usuario {
-  if [ -d /home/$1 ]; then
-    respaldar $1
-    sleep 2
-  else
-    /home/$1 &> /dev/null
-    echo "Error Codigo:" $? "- No existe una carpeta con el nombre del usuario ingresado"
   fi
 }
 
@@ -104,8 +113,24 @@ function menu {
   done
 }
 
-while true; do
-  echo
-  echo "RESPALDAR LA CARPETA HOME DE UN USUARIO"
-  menu
-done
+function inicializar {
+  parametro=$1
+  if [ "$parametro" = "-m" ]; then
+    while true; do
+      echo
+      echo "RESPALDAR LA CARPETA HOME DE UN USUARIO"
+      menu
+    done
+  elif [ "$parametro" = "-a" ]; then
+     respaldo_automatico
+  else
+     echo "Parametros no validos"
+  fi
+}
+
+inicializar $1 # El presente Script se puede ejecutar con dos parametros
+               # -m Modo Manual, aparecera un menu con opciones donde el
+               #    usuario debera ingresar el nombre del usuario del cual
+               #    realizara el respaldo de los datos.
+               # -a Modo Automatico, realizar un respaldo de la carpeta
+               #    home del usuario que se encuentre activo.
