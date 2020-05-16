@@ -127,7 +127,10 @@ function inicializar {
   elif [ "$parametro" = "-a" ]; then
      respaldo auto
   else
-     echo "Parametros no validos"
+     echo "No se ha ingresado ningun parametro"
+     echo "Parametros permitidos:"
+     echo "      -m  ->  Muestra un menu al iniciar, en este se podra realizar un respaldo del usuario que ingrese"
+     echo "      -a  ->  Modo automatico, realiza un respaldo automaticamente del usuario activo"
   fi
 }
 
