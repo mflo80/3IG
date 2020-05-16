@@ -17,46 +17,49 @@ function error {
   echo "No existe la carpeta del usuario ingresado"
 }
 
-function respaldo_automatico {
-  usuario=$(whoami)
-  hora=$(date +%H%M)
-  tar -czf backup-$usuario-$hora.tar.gz /home/$usuario/
-  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz
-}
 
-function respaldo_manual {
-  echo "Respaldando carpeta de trabajo del usuario" $1
-  usuario=$1
-  hora=$(date +%H%M) # Captura la hora y minuto actual
-  echo "Comprimiendo espere por favor..."
-  tar -czf backup-$usuario-$hora.tar.gz /home/$usuario/
+function respaldo {
+  if [ $1 = "auto" ]; then
+     usuario=$(whoami)
+  elif [ $1 = "manual" ]; then
+     usuario=$2
+     echo "Respaldando carpeta de trabajo del usuario" $1
+     sleep 1
+     echo "Comprimiendo, espere por favor..."
+  fi
+    # Captura la hora y minuto actual
+  hora=$(date +%H%M)
     # Se mueve el archivo generado a la carpeta de respaldos, ya que sino queda dentro de la
     # carpeta del usuario y al generarse otro respaldo, el archivo va a quedar dentro del nuevo
     # backup y asi sucesivamente, generaldose cada vez un archivo de mayor tamanio innecesario
     # En caso de crear una nueva carpeta de destino para almacenar los backup, el usuario
     # tiene que tener los privilegios para escribir en ella.
-  sleep 2
-  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz 
+  tar -czf backup-$usuario-$hora.tar.gz /home/$usuario/
+  mv -f backup-$usuario-$hora.tar.gz /home/backup/backup-$usuario-$hora.tar.gz
   if [ -f /home/backup/backup-$usuario-$hora.tar.gz ]; then
-    echo "Respaldo finalizado con exito"
+    if [ $1 = "manual" ]; then
+      echo "Respaldo finalizado con exito"
+    fi
   else
     if [ -f backup-$usuario-$hora.tar.gz ]; then
      rm backup-$usuario-$hora.tar.gz # En caso de fallar el respaldo elimina la copia que genere
                                      # dentro de la carpeta donde se encuentre el presente Script
     fi
-    echo "Error Codigo:" $? "No se realizo el respaldo, intente nuevamente"
+    echo "No se realizo el respaldo, intente nuevamente"
+    sleep 1
   fi
 }
+
 
 # Funcion que verifica que exista la carpeta home del usuario ingresado
 # en caso de no existir genera un codigo de error
 function verificar_usuario {
   if [ -d /home/$1 ]; then
-    respaldo_manual $1
+    respaldo manual $1
     sleep 2
   else
     /home/$1 &> /dev/null
-    echo "Error Codigo:" $? "- No existe una carpeta con el nombre del usuario ingresado"
+    echo "Error Codigo:" $? "- No existe en /home una carpeta con el nombre del usuario ingresado"
   fi
 }
 
@@ -66,12 +69,12 @@ function verificar_carpeta_backup {
   cd /home/backup &> /dev/null
   error=$(echo $?)
   if [ $error -eq 1 ]; then
-    echo "No se encontro la carpeta de almacenamiento de los respaldo"
+    echo "No se encontro la carpeta de almacenamiento de respaldos"
     sleep 1
-    echo "Creando la carpeta, espere por favor"
+    echo "Creando la carpeta, espere por favor..."
     sleep 1
     sudo mkdir /home/backup/
-    sudo chmod 771 /home/backup/
+    sudo chmod 776 /home/backup/
     cd /home/backup &> /dev/null
     error=$(echo $?)
     if [ $error -eq 1 ]; then
@@ -122,15 +125,16 @@ function inicializar {
       menu
     done
   elif [ "$parametro" = "-a" ]; then
-     respaldo_automatico
+     respaldo auto
   else
      echo "Parametros no validos"
   fi
 }
 
-inicializar $1 # El presente Script se puede ejecutar con dos parametros
-               # -m Modo Manual, aparecera un menu con opciones donde el
-               #    usuario debera ingresar el nombre del usuario del cual
-               #    realizara el respaldo de los datos.
-               # -a Modo Automatico, realizar un respaldo de la carpeta
-               #    home del usuario que se encuentre activo.
+# El presente Script se puede ejecutar con dos parametros
+# -m Modo Manual, aparecera un menu con opciones donde el
+#    usuario debera ingresar el nombre del usuario del cual
+#    realizara el respaldo de los datos.
+# -a Modo Automatico, realizar un respaldo de la carpeta
+#    home del usuario que se encuentre activo.
+inicializar $1
