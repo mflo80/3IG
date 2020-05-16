@@ -18,13 +18,15 @@ function saludar {
 
   if [ $usuario = "mflorio" ] && [ $terminal = "tty1" ]; then
     echo "Bienvenido Marcelo Fabian Florio Gonzalez, has iniciado sesion en la terminal > tty1"
+  elif [ $usuario = "mflorio" ]; then
+    echo "Bienvenido Marcelo Fabian Florio Gonzalez, has iniciado sesion en la terminal >" $terminal
   elif [ $usuario = "root" ]; then
     echo "Hola humano, has iniciado sesion como root en la terminal >" $terminal
   else
     echo "Bienvenido humano, has iniciado sesion en la terminal >" $terminal
   fi
 
-  sleep 3
+  sleep 2
   exit
 }
 
