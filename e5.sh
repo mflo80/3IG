@@ -60,8 +60,22 @@ function menu {
  done
 }
 
-while true; do
-   echo
-   echo "VER MANUAL DE AYUDA DE UN COMANDO"
-   menu
-done
+function inicializar {
+  if [ -z $1 ] || [ $1 = "--help" ] || [ $1 = "-h" ]; then
+    echo "No ha ingresado ningun parametro"
+    echo "Ayuda:"
+    echo "      ./e6.sh -m  ->  Muestra un menu al iniciar"
+    echo "      ./e6.sh -h o --help  ->  Muestra la ayuda"
+    echo "      ./e6.sh comando  ->  Muestra el manual del comando ingresado"
+  elif [ $1 = "-m" ]; then
+    while true; do
+      echo
+      echo "VER MANUAL DE AYUDA DE UN COMANDO"
+      menu
+    done
+  else
+     verificar $1
+  fi
+}
+
+inicializar $1
